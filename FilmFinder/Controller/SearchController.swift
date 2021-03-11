@@ -30,20 +30,44 @@ class SearchController: UIViewController {
         activitySpinner.isHidden = true
     }
     
+    func showActivitySpinner(_ spinning: Bool) {
+        if spinning {
+            DispatchQueue.main.async {
+                self.activitySpinner.isHidden = true
+                self.activitySpinner.stopAnimating()
+            }
+        } else {
+            DispatchQueue.main.async {
+                self.activitySpinner.isHidden = false
+                self.activitySpinner.startAnimating()
+            }
+        }
+    }
+    
     // MARK: Actions
     
     @IBAction func tapSearchButton(_ sender: UIButton) {
-        activitySpinner.isHidden = false
-        activitySpinner.startAnimating()
+        showActivitySpinner(true)
+        
         
         if let searchTerm = searchField?.text {
             if !searchTerm.isEmpty {
-                let storyBoard : UIStoryboard = UIStoryboard(name: "Main", bundle:nil)
-                let tableVC = storyBoard.instantiateViewController(withIdentifier: "FilmTableViewController") as! FilmTableViewController
-                
-                self.navigationController?.pushViewController(tableVC, animated: true)
+                                
+                FilmAPIClient.sharedInstance().callFilmAPI(searchTerm: searchTerm.replacingOccurrences(of: " ", with: "+")) { (result, error) in
+                    if error != nil {
+                        DispatchQueue.main.async {
+                            self.showActivitySpinner(false)
+                        }
+                    } else {
+                        DispatchQueue.main.async {
+                            self.showActivitySpinner(false)
+                            let storyBoard : UIStoryboard = UIStoryboard(name: "Main", bundle:nil)
+                            let tableVC = storyBoard.instantiateViewController(withIdentifier: "FilmTableViewController") as! FilmTableViewController
+                            self.navigationController?.pushViewController(tableVC, animated: true)
+                        }
+                    }
+                }
             }
         }
-        
     }
 }
